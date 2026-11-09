@@ -1,0 +1,53 @@
+-- C2PO Specification Valid with C2PO/R2U2 v4.0 or greater
+INPUT
+	error_status: bool;
+	home: bool;
+	Operating_Mode: int;
+	actionable_breach: bool;
+	altitude: float;
+	ardupilot_observed_rtl: bool;
+	global_latitude: float;
+	global_longitude: float;
+	home_latitude: float;
+	home_longitude: float;
+	land_cmd: bool;
+	land_msg: bool;
+	landed: bool;
+	mode_manager_rtl_cmd: bool;
+	outside_fence_dist: float;
+	position_report: bool;
+	rx_fence_upload_started: bool;
+	speed: float;
+	tx_fence_upload_accepted: bool;
+DEFINE
+	OperatingMode_Normal := Operating_Mode == 0;
+	OperatingMode_Recovery := Operating_Mode == 1;
+	landed_and_home := landed && home;
+	latitude_diff := abs(home_latitude - global_latitude);
+	longitude_diff := abs(home_longitude - global_longitude);
+	persists := true;
+FTSPEC
+	-- WARNING: The following spec (RTL_Behavior_Latch) includes M (i.e., end of mission-time) in a temporal interval.
+	-- If M is large, this specification may result in high memory usage.
+	-- Please specify M manually in this file or with the --mission-time flag in C2PO.
+	RTL_Behavior_Latch: (((! ((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery))) || (F[1,1] (((OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery))) R[0,M] (((! mode_manager_rtl_cmd) && ((F[1,1] mode_manager_rtl_cmd) && (! (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))))) -> ((F[1,1] ((! (((! landed_and_home) && (! (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery))))) U[0,M] ((! ardupilot_observed_rtl) && (! landed_and_home)))) || (((ardupilot_observed_rtl && (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))) || (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))) R[0,M] ardupilot_observed_rtl))) && (! (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery))))))) && (mode_manager_rtl_cmd -> ((! (((! landed_and_home) && (! (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery))))) U[0,M] ((! ardupilot_observed_rtl) && (! landed_and_home)))) || (((ardupilot_observed_rtl && (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))) || (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))) R[0,M] ardupilot_observed_rtl)))))) && ((TAU == 0) -> (OperatingMode_Recovery -> (((OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery))) R[0,M] (((! mode_manager_rtl_cmd) && ((F[1,1] mode_manager_rtl_cmd) && (! (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))))) -> ((F[1,1] ((! (((! landed_and_home) && (! (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery))))) U[0,M] ((! ardupilot_observed_rtl) && (! landed_and_home)))) || (((ardupilot_observed_rtl && (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))) || (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))) R[0,M] ardupilot_observed_rtl))) && (! (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery))))))) && (mode_manager_rtl_cmd -> ((! (((! landed_and_home) && (! (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery))))) U[0,M] ((! ardupilot_observed_rtl) && (! landed_and_home)))) || (((ardupilot_observed_rtl && (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))) || (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))) R[0,M] ardupilot_observed_rtl)))))));
+	Breach_Excursion: (((outside_fence_dist > 0.0) && (outside_fence_dist <= 10.0)) -> (F[0,299] ((outside_fence_dist <= 0.0) || actionable_breach)));
+	-- WARNING: The following spec (Geofence_Commands_Frequency) includes M (i.e., end of mission-time) in a temporal interval.
+	-- If M is large, this specification may result in high memory usage.
+	-- Please specify M manually in this file or with the --mission-time flag in C2PO.
+	Geofence_Commands_Frequency: (((! ((! OperatingMode_Normal) && (F[1,1] OperatingMode_Normal))) || (F[1,1] ((OperatingMode_Normal && (F[1,1] (! OperatingMode_Normal))) R[0,M] (((! prev(false,landed)) && prev(false,tx_fence_upload_accepted)) -> ((G[0,599] (landed || (! tx_fence_upload_accepted))) || ((OperatingMode_Normal && (F[1,1] (! OperatingMode_Normal))) R[0,M] (landed || (! tx_fence_upload_accepted)))))))) && ((TAU == 0) -> (OperatingMode_Normal -> ((OperatingMode_Normal && (F[1,1] (! OperatingMode_Normal))) R[0,M] (((! prev(false,landed)) && prev(false,tx_fence_upload_accepted)) -> ((G[0,599] (landed || (! tx_fence_upload_accepted))) || ((OperatingMode_Normal && (F[1,1] (! OperatingMode_Normal))) R[0,M] (landed || (! tx_fence_upload_accepted)))))))));
+	Breach_Actionable: ((outside_fence_dist > 10.0) -> actionable_breach);
+	Recovery_Deadline: ((((! error_status) && (F[1,1] error_status)) -> (F[1,1] (F[0,2] OperatingMode_Recovery))) && ((TAU == 0) -> (error_status -> (F[0,2] OperatingMode_Recovery))));
+	Home: (((longitude_diff < 0.0000180) && (latitude_diff < 0.0000180)) -> home);
+	Not_Landed: (((speed > 0.2) || (altitude < 2000.0)) -> (! landed));
+	Land_Behavior: (land_cmd -> (F[0,599] landed));
+	Operating_Mode: ((Operating_Mode <= 1) && (Operating_Mode >= 0));
+	Not_Home: (((longitude_diff >= 0.0000180) && (latitude_diff >= 0.0000180)) -> (! home));
+	TX_Position: ((! landed) -> (F[0,9] position_report));
+	Error_Status_Send: ((actionable_breach && (! ardupilot_observed_rtl)) -> error_status);
+	Upload_Geofence: (rx_fence_upload_started -> (F[0,99] tx_fence_upload_accepted));
+	Home_Long_Lag_Req: ((((home_longitude >= -180.0) && (home_longitude <= 180.0)) && (home_latitude >= -90.0)) && (home_latitude <= 90.0));
+	Error_Status_NoSend: (((! actionable_breach) || ardupilot_observed_rtl) -> (! error_status));
+	Global_Long_Lat_Req: ((((global_longitude >= -180.0) && (global_longitude <= 180.0)) && (global_latitude >= -90.0)) && (global_latitude <= 90.0));
+	RTL_Action: (((! ((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery))) || (F[1,1] ((F[0,9] mode_manager_rtl_cmd) || (F[0,8] (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery))))))) && ((TAU == 0) -> (OperatingMode_Recovery -> ((F[0,9] mode_manager_rtl_cmd) || (F[0,8] (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery))))))));
+	Landed: (((G[0,10] ((speed < 0.2) && (altitude < 2000.0))) && land_msg) -> landed);

@@ -1,0 +1,27 @@
+-- C2PO Specification Valid with C2PO/R2U2 v4.0 or greater
+INPUT
+	Operating_Mode: int;
+	vm_ardupilot_reboot_cmd: bool;
+	vm_ardupilot_rtl_cmd: bool;
+	landed_and_home: bool;
+	mav_error_status: bool;
+	monitor_error_status: bool;
+DEFINE
+	OperatingMode_Normal := Operating_Mode == 0;
+	OperatingMode_Recovery := Operating_Mode == 1;
+FTSPEC
+	Error_Status: ((mav_error_status || monitor_error_status) -> OperatingMode_Recovery);
+	Reboot_Action: ((((OperatingMode_Recovery && ((! landed_and_home) && ((F[1,1] landed_and_home) && (F[1,1] OperatingMode_Recovery)))) -> ((F[1,10] vm_ardupilot_reboot_cmd) || (F[2,10] (! OperatingMode_Recovery)))) && (((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> (F[1,1] (landed_and_home -> ((F[0,9] vm_ardupilot_reboot_cmd) || (F[1,9] (! OperatingMode_Recovery))))))) && (((TAU == 0) && (OperatingMode_Recovery && landed_and_home)) -> ((F[0,9] vm_ardupilot_reboot_cmd) || (F[1,9] (! OperatingMode_Recovery)))));
+	Land_Eventually: ((((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> ((F[1,6000] landed_and_home) || (F[2,6000] (! OperatingMode_Recovery)))) && (((TAU == 0) && OperatingMode_Recovery) -> ((F[0,5999] landed_and_home) || (F[1,5999] (! OperatingMode_Recovery)))));
+	Initial_State: ((TAU == 0) -> OperatingMode_Normal);
+	RTL_Action: ((((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> ((F[1,10] vm_ardupilot_rtl_cmd) || (F[2,10] (! OperatingMode_Recovery)))) && (((TAU == 0) && OperatingMode_Recovery) -> ((F[0,9] vm_ardupilot_rtl_cmd) || (F[1,9] (! OperatingMode_Recovery)))));
+	-- WARNING: The following spec (Land_Behavior) includes M (i.e., end of mission-time) in a temporal interval.
+	-- If M is large, this specification may result in high memory usage.
+	-- Please specify M manually in this file or with the --mission-time flag in C2PO.
+	Land_Behavior: ((((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> ((landed_and_home || (F[1,1] (! OperatingMode_Recovery))) R[1,M] (! vm_ardupilot_reboot_cmd))) && (((TAU == 0) && OperatingMode_Recovery) -> ((landed_and_home || (F[1,1] (! OperatingMode_Recovery))) R[0,M] (! vm_ardupilot_reboot_cmd))));
+	Finish_Recovery: ((((! vm_ardupilot_reboot_cmd) && (F[1,1] vm_ardupilot_reboot_cmd)) -> (F[1,600] OperatingMode_Normal)) && (((TAU == 0) && vm_ardupilot_reboot_cmd) -> (F[0,599] OperatingMode_Normal)));
+	-- WARNING: The following spec (Recovery_Latch) includes M (i.e., end of mission-time) in a temporal interval.
+	-- If M is large, this specification may result in high memory usage.
+	-- Please specify M manually in this file or with the --mission-time flag in C2PO.
+	Recovery_Latch: ((((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> (vm_ardupilot_reboot_cmd R[1,M] (OperatingMode_Recovery || vm_ardupilot_reboot_cmd))) && (((TAU == 0) && OperatingMode_Recovery) -> (vm_ardupilot_reboot_cmd R[0,M] (OperatingMode_Recovery || vm_ardupilot_reboot_cmd))));
+	Operating_Mode_Sys: ((Operating_Mode <= 1) && (Operating_Mode >= 0));

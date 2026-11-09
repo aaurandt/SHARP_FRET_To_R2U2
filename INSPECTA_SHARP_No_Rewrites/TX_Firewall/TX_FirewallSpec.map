@@ -1,0 +1,6 @@
+tx_output:0
+Operating_Mode:1
+arp_wellformed:2
+ipv4_wellformed:3
+tx_input:4
+tx_output_matches_input:5

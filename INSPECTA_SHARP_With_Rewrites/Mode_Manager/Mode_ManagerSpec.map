@@ -1,0 +1,6 @@
+Operating_Mode:0
+vm_ardupilot_reboot_cmd:1
+vm_ardupilot_rtl_cmd:2
+landed_and_home:3
+mav_error_status:4
+monitor_error_status:5

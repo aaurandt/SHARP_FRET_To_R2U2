@@ -1,0 +1,34 @@
+-- C2PO Specification Valid with C2PO/R2U2 v4.0 or greater
+INPUT
+	error_status: bool;
+	mav_output: bool;
+	Operating_Mode: int;
+	inflight_unsafe_cmd: bool;
+	landed: bool;
+	mav_blacklisted: bool;
+	mav_output_matches_input: bool;
+	mav_wellformed: bool;
+	rejected_count: int;
+	rx_input: bool;
+DEFINE
+	OperatingMode_Normal := Operating_Mode == 0;
+	OperatingMode_Recovery := Operating_Mode == 1;
+	error_threshold := 5;
+FTSPEC
+	Error_Status_NoSend: ((rejected_count < error_threshold) -> (! error_status));
+	Rejected_Msg_Count_Max: (((rx_input && (! mav_output)) && (prev(0,rejected_count) == 20)) -> (rejected_count == 20));
+	-- WARNING: The following spec (Error_Reset) includes M (i.e., end of mission-time) in a temporal interval.
+	-- If M is large, this specification may result in high memory usage.
+	-- Please specify M manually in this file or with the --mission-time flag in C2PO.
+	Error_Reset: ((TAU == 0) -> (((! (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))) U[0,M] ((OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery))) && (F[1,1] ((! error_status) && (rejected_count == 0))))) || (G[0,M] (! (OperatingMode_Recovery && (F[1,1] (! OperatingMode_Recovery)))))));
+	Blocked_Messages_Frequency: ((OperatingMode_Normal && (prev(false,rx_input) && (! prev(false,mav_output)))) -> ((OperatingMode_Normal && (F[1,1] (! OperatingMode_Normal))) R[0,9] (! (rx_input && (! mav_output)))));
+	Recovery_Output: (OperatingMode_Recovery -> (! mav_output));
+	Operating_Mode: ((Operating_Mode <= 1) && (Operating_Mode >= 0));
+	Input_To_Output_Block_Frame: ((rx_input && (mav_wellformed -> mav_blacklisted)) -> (! mav_output));
+	Input_To_Output_Block: ((! rx_input) -> (! mav_output));
+	Input_To_Output_Forward: ((OperatingMode_Normal && ((rx_input && mav_wellformed) && (! mav_blacklisted))) -> (mav_output && mav_output_matches_input));
+	Recovery_Deadline: ((((! error_status) && (F[1,1] error_status)) -> (F[1,3] OperatingMode_Recovery)) && (((TAU == 0) && error_status) -> (F[0,2] OperatingMode_Recovery)));
+	Unsafe_Commands: ((! landed) -> (! (mav_output && inflight_unsafe_cmd)));
+	Rejected_Msg_Count_No_Change: ((! (rx_input && (! mav_output))) -> (prev(0,rejected_count) == rejected_count));
+	Error_Status_Send: ((rejected_count >= error_threshold) -> error_status);
+	Rejected_Msg_Count: (((rx_input && (! mav_output)) && (prev(0,rejected_count) < 20)) -> (rejected_count == (prev(0,rejected_count) + 1)));

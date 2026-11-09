@@ -1,0 +1,17 @@
+-- C2PO Specification Valid with C2PO/R2U2 v4.0 or greater
+INPUT
+	tx_output: bool;
+	Operating_Mode: int;
+	arp_wellformed: bool;
+	ipv4_wellformed: bool;
+	tx_input: bool;
+	tx_output_matches_input: bool;
+DEFINE
+	OperatingMode_Normal := Operating_Mode == 0;
+FTSPEC
+	Blocked_Messages_Frequency: ((OperatingMode_Normal && (prev(false,tx_input) && (! prev(false,tx_output)))) -> ((OperatingMode_Normal && (F[1,1] (! OperatingMode_Normal))) R[0,9] (! (tx_input && (! tx_output)))));
+	Operating_Mode: ((Operating_Mode <= 1) && (Operating_Mode >= 0));
+	Input_To_Output_Forward_ARP: ((tx_input && arp_wellformed) -> (tx_output && tx_output_matches_input));
+	Input_To_Output_Block_Frame: ((tx_input && (! (arp_wellformed || ipv4_wellformed))) -> (! tx_output));
+	Input_To_Output_Forward_IPv4: ((tx_input && ipv4_wellformed) -> (tx_output && tx_output_matches_input));
+	Input_To_Output_Block: ((! tx_input) -> (! tx_output));

@@ -1,0 +1,11 @@
+mav_output:0
+vmm_output:1
+Operating_Mode:2
+arp_wellformed:3
+ipv4_wellformed:4
+rx_input:5
+rx_output_matches_input:6
+udp_dest_ardupilot:7
+udp_dest_whitelisted:8
+udp_src_GCS:9
+udp_wellformed:10

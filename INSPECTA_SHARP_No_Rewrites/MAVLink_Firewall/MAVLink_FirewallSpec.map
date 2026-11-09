@@ -1,0 +1,10 @@
+error_status:0
+mav_output:1
+Operating_Mode:2
+inflight_unsafe_cmd:3
+landed:4
+mav_blacklisted:5
+mav_output_matches_input:6
+mav_wellformed:7
+rejected_count:8
+rx_input:9
