@@ -46,5 +46,5 @@ FTSPEC
 	Home_Long_Lag_Req: ((((home_longitude >= -180.0) && (home_longitude <= 180.0)) && (home_latitude >= -90.0)) && (home_latitude <= 90.0));
 	Error_Status_NoSend: ((actionable_breach -> ardupilot_observed_rtl) -> (! error_status));
 	Global_Long_Lat_Req: ((((global_longitude >= -180.0) && (global_longitude <= 180.0)) && (global_latitude >= -90.0)) && (global_latitude <= 90.0));
-	RTL_Action: ((((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> ((F[1,10] mode_manager_rtl_cmd) || (F[2,10] (! OperatingMode_Recovery)))) && (((TAU == 0) && OperatingMode_Recovery) -> ((F[0,9] mode_manager_rtl_cmd) || (F[1,9] (! OperatingMode_Recovery)))));
+	RTL_Action: ((((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> (F[1,9] ((F[0,1] mode_manager_rtl_cmd) || (F[1,1] (! OperatingMode_Recovery))))) && (((TAU == 0) && OperatingMode_Recovery) -> (F[0,8] ((F[0,1] mode_manager_rtl_cmd) || (F[1,1] (! OperatingMode_Recovery))))));
 	Landed: (((G[0,10] ((speed < 0.2) && (altitude < 2000.0))) && land_msg) -> landed);

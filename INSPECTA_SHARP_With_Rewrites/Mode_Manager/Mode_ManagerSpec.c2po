@@ -11,10 +11,10 @@ DEFINE
 	OperatingMode_Recovery := Operating_Mode == 1;
 FTSPEC
 	Error_Status: ((mav_error_status || monitor_error_status) -> OperatingMode_Recovery);
-	Reboot_Action: ((((OperatingMode_Recovery && ((! landed_and_home) && ((F[1,1] landed_and_home) && (F[1,1] OperatingMode_Recovery)))) -> ((F[1,10] vm_ardupilot_reboot_cmd) || (F[2,10] (! OperatingMode_Recovery)))) && (((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> (F[1,1] (landed_and_home -> ((F[0,9] vm_ardupilot_reboot_cmd) || (F[1,9] (! OperatingMode_Recovery))))))) && (((TAU == 0) && (OperatingMode_Recovery && landed_and_home)) -> ((F[0,9] vm_ardupilot_reboot_cmd) || (F[1,9] (! OperatingMode_Recovery)))));
-	Land_Eventually: ((((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> ((F[1,6000] landed_and_home) || (F[2,6000] (! OperatingMode_Recovery)))) && (((TAU == 0) && OperatingMode_Recovery) -> ((F[0,5999] landed_and_home) || (F[1,5999] (! OperatingMode_Recovery)))));
+	Reboot_Action: ((((OperatingMode_Recovery && ((! landed_and_home) && ((F[1,1] landed_and_home) && (F[1,1] OperatingMode_Recovery)))) -> (F[1,9] ((F[0,1] vm_ardupilot_reboot_cmd) || (F[1,1] (! OperatingMode_Recovery))))) && (((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> (F[1,1] (landed_and_home -> (F[0,8] ((F[0,1] vm_ardupilot_reboot_cmd) || (F[1,1] (! OperatingMode_Recovery)))))))) && (((TAU == 0) && (OperatingMode_Recovery && landed_and_home)) -> (F[0,8] ((F[0,1] vm_ardupilot_reboot_cmd) || (F[1,1] (! OperatingMode_Recovery))))));
+	Land_Eventually: ((((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> (F[1,5999] ((F[0,1] landed_and_home) || (F[1,1] (! OperatingMode_Recovery))))) && (((TAU == 0) && OperatingMode_Recovery) -> (F[0,5998] ((F[0,1] landed_and_home) || (F[1,1] (! OperatingMode_Recovery))))));
 	Initial_State: ((TAU == 0) -> OperatingMode_Normal);
-	RTL_Action: ((((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> ((F[1,10] vm_ardupilot_rtl_cmd) || (F[2,10] (! OperatingMode_Recovery)))) && (((TAU == 0) && OperatingMode_Recovery) -> ((F[0,9] vm_ardupilot_rtl_cmd) || (F[1,9] (! OperatingMode_Recovery)))));
+	RTL_Action: ((((! OperatingMode_Recovery) && (F[1,1] OperatingMode_Recovery)) -> (F[1,9] ((F[0,1] vm_ardupilot_rtl_cmd) || (F[1,1] (! OperatingMode_Recovery))))) && (((TAU == 0) && OperatingMode_Recovery) -> (F[0,8] ((F[0,1] vm_ardupilot_rtl_cmd) || (F[1,1] (! OperatingMode_Recovery))))));
 	-- WARNING: The following spec (Land_Behavior) includes M (i.e., end of mission-time) in a temporal interval.
 	-- If M is large, this specification may result in high memory usage.
 	-- Please specify M manually in this file or with the --mission-time flag in C2PO.
